@@ -1,0 +1,122 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../models/userModel");
+const Role = require("../models/roleModel");
+const mongoose = require("mongoose");
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+
+exports.signupUser = async (req, res) => {
+  try {
+    const {
+      username,
+      firstName,
+      lastName,
+      phone,
+      email,
+      password,
+      role,
+      subCategories
+    } = req.body;
+
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }]
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Username or email already exists." });
+    }
+
+    const selectedRole = await Role.findById(role);
+    if (!selectedRole) {
+      return res.status(400).json({ message: "Invalid role selected." });
+    }
+
+    const roleSubCatIds = selectedRole.subCategories.map((sc) => sc._id.toString());
+    const validSubCategories = subCategories.map((scId) => new mongoose.Types.ObjectId(scId));
+
+    const isValidSubCategories = validSubCategories.every((scId) =>
+      roleSubCatIds.includes(scId.toString()) 
+    );
+
+    if (!isValidSubCategories) {
+      return res.status(400).json({ message: "Invalid subCategories for the selected role." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      username,
+      firstName,
+      lastName,
+      phone,
+      email,
+      password: hashedPassword,
+      role,
+      subCategories: subCategories.map(id => new mongoose.Types.ObjectId(id))
+    });
+
+    await newUser.save();
+
+    const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
+      expiresIn: "5h"
+    });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        role: selectedRole.roleName
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+exports.loginUser = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      const user = await User.findOne({ email }).populate("role");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+        
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+      const roleDoc = await Role.findById(user.role._id);
+      const selectedSubCategories = roleDoc.subCategories.filter((sub) =>
+        user.subCategories.some((scId) => scId.toString() === sub._id.toString())
+      );
+      const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
+      
+      res.status(200).json({
+        message: "Login successful",
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: {
+            id: user.role._id,
+            name: user.role.roleName
+          },
+          subCategories: selectedSubCategories.map((sc) => ({
+            id: sc._id,
+            name: sc.name
+          }))
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
+  
