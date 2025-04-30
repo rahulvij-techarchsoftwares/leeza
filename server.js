@@ -3,6 +3,8 @@ const dotenv = require("dotenv");
 const connectDB = require("./db/connectdb");
 const roleRoutes = require("./routes/roleRoutes");
 const authRoutes = require("./routes/userRoutes");
+const profileRoutes = require("./routes/profileRoutes");
+const jobsRoutes = require("./routes/jobsRoutes");
 
 dotenv.config();
 
@@ -18,6 +20,8 @@ app.get("/", (req, res) => {
 
 app.use("/api", roleRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/jobs", jobsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
