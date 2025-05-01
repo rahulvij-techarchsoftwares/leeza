@@ -34,7 +34,7 @@ exports.addJobPost = async (req, res) => {
       jobDescription,
       category: category.map(id => new mongoose.Types.ObjectId(id)),
       budget,
-      location,
+      location, 
       deadline
     });
 

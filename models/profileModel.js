@@ -6,6 +6,16 @@ const profileSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  firstName: {
+    type: String
+  },
+  lastName: {
+    type: String
+  },
+  username: {
+    type: String,
+    unique: true
+  },
   experience: {
     type: String
   },
@@ -50,51 +60,7 @@ const profileSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-const companyProfileSchema = new mongoose.Schema({
-    company_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    name: {
-      type: String
-    },
-    website: [
-      {
-        type: String
-      }
-    ],
-    about: {
-      type: String
-    },
-    noOfEmployees: {
-      type: String
-    },
-    supportEmail: {
-      type: String
-    },
-    supportPhoneNumber: {
-      type: String
-    },
-    industry: [
-      {
-        type: String
-      }
-    ],
-    projects: [
-      {
-        type: String
-      }
-    ],
-    clients: [
-      {
-        type: String
-      }
-    ],
-    yearEstablished: {
-      type: Date
-    }
-  }, { timestamps: true });
+
 
 module.exports = mongoose.model('Profile', profileSchema);
-module.exports = mongoose.model('CompanyProfile', companyProfileSchema);
+

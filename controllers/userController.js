@@ -9,9 +9,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 exports.signupUser = async (req, res) => {
   try {
     const {
-      username,
-      firstName,
-      lastName,
       phone,
       email,
       password,
@@ -20,7 +17,7 @@ exports.signupUser = async (req, res) => {
     } = req.body;
 
     const existingUser = await User.findOne({
-      $or: [{ username }, { email }]
+      $or: [{ email }]
     });
 
     if (existingUser) {
@@ -46,9 +43,6 @@ exports.signupUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      username,
-      firstName,
-      lastName,
       phone,
       email,
       password: hashedPassword,
@@ -67,7 +61,6 @@ exports.signupUser = async (req, res) => {
       token,
       user: {
         id: newUser._id,
-        username: newUser.username,
         email: newUser.email,
         role: selectedRole.roleName
       }
