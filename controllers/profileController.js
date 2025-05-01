@@ -1,5 +1,5 @@
 const Profile = require("../models/profileModel"); 
-const CompanyProfile = require('../models/profileModel');
+const CompanyProfile = require('../models/companyprofileModel');
 
 exports.addOrUpdateProfile = async (req, res) => {
   try {
