@@ -16,9 +16,14 @@ const profileSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
-  experience: {
-    type: String
-  },
+  experience: [
+    {
+      companyName: String,
+      position: String,
+      startDate: Date,
+      endDate: Date
+    }
+  ],
   portfolioLinks: [
     {
       type: String
