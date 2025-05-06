@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./db/connectdb");
 const roleRoutes = require("./routes/roleRoutes");
 const authRoutes = require("./routes/userRoutes");
@@ -16,6 +17,9 @@ connectDB();
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
+
+
 
 app.get("/", (req, res) => {
   res.send("API is running...");

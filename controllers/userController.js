@@ -56,9 +56,17 @@ exports.signupUser = async (req, res) => {
       expiresIn: "5h"
     });
 
+
+    res.cookie('token', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'Lax', 
+      maxAge: 5 * 60 * 60 * 1000 
+    });
+
     res.status(201).json({
       message: "User registered successfully",
-      token,
+      // token,
       user: {
         id: newUser._id,
         email: newUser.email,
@@ -90,10 +98,17 @@ exports.loginUser = async (req, res) => {
         user.subCategories.some((scId) => scId.toString() === sub._id.toString())
       );
       const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie('token', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'Lax', 
+      maxAge: 7 * 24 * 60 * 60 * 1000 
+    });
       
       res.status(200).json({
         message: "Login successful",
-        token,
+        // token,
         user: {
           id: user._id,
           username: user.username,
@@ -135,17 +150,23 @@ exports.loginUser = async (req, res) => {
 
 
 exports.authenticate = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  console.log('Cookies:', req.cookies);
+  // const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  // if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  //   return res.status(401).json({ message: "Authorization token missing or invalid." });
+  // }
+
+  // const token = authHeader.split(" ")[1];
+  const token = req.cookies.token; 
+
+  if (!token) {
     return res.status(401).json({ message: "Authorization token missing or invalid." });
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
+    console.log(decoded);
     const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(401).json({ message: "User not found." });
