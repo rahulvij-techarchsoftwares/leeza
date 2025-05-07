@@ -150,7 +150,7 @@ exports.loginUser = async (req, res) => {
 
 
 exports.authenticate = async (req, res, next) => {
-  console.log('Cookies:', req.cookies);
+  // console.log('Cookies:', req.cookies);
   // const authHeader = req.headers.authorization;
 
   // if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -166,7 +166,7 @@ exports.authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log(decoded);
+    // console.log(decoded);
     const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(401).json({ message: "User not found." });
@@ -180,5 +180,31 @@ exports.authenticate = async (req, res, next) => {
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token." });
+  }
+};
+
+
+exports.authenticateSocket = async (socket, next) => {
+  const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+  const token = cookies.token;
+  if (!token) {
+    return next(new Error("Authorization token missing or invalid."));
+  }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return next(new Error("User not found."));
+    }
+    socket.user = {
+      id: user._id,
+      role: user.role,
+    };
+
+    console.log(`Authenticated user ${user._id} with role ${user.role}`);
+    next();  
+  } catch (err) {
+    return next(new Error("Invalid or expired token."));
   }
 };
