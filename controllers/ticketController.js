@@ -115,3 +115,35 @@ exports.getTicketById = async (req, res) => {
 };
 
 
+exports.updateTicketStatus = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { ticketId } = req.params;
+    const { status } = req.body;
+    const user = await User.findById(user_id);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const role = await Role.findById(user.role);
+    console.log("this is role", role);
+    if (!role || !['admin', 'Admin'].includes(role.roleName)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const validStatuses = ['Open', 'In Progress', 'Resolved', 'Closed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value.' });
+    }
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+
+    ticket.status = status;
+    await ticket.save();
+
+    return res.status(200).json({ message: 'Ticket status updated successfully', ticket });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
