@@ -1,29 +1,36 @@
 const Profile = require("../models/profileModel"); 
 const CompanyProfile = require('../models/companyprofileModel');
+const User = require("../models/userModel");
+const Role = require("../models/roleModel");
 
 exports.addOrUpdateProfile = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     const updates = req.body;
-
     let profile = await Profile.findOne({ user_id: userId });
 
     if (profile) {
       Object.keys(updates).forEach(key => {
         profile[key] = updates[key];
       });
-
       await profile.save();
-      return res.status(200).json({ message: "Profile updated successfully.", profile });
     } else {
-      const newProfile = new Profile({
+      profile = new Profile({
         user_id: userId,
         ...updates
       });
-
-      await newProfile.save();
-      return res.status(201).json({ message: "Profile created successfully.", profile: newProfile });
+      await profile.save();
     }
+    const user = await User.findById(userId);
+    if (user) {
+      if (updates.phone) user.phone = updates.phone;
+      if (updates.email) user.email = updates.email;
+      if (updates.subCategories) user.subCategories = updates.subCategories;
+      await user.save();
+    }
+
+    return res.status(200).json({ message: profile.createdAt ? "Profile created successfully." : "Profile updated successfully.", profile });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -31,20 +38,45 @@ exports.addOrUpdateProfile = async (req, res) => {
 
 
 exports.getProfile = async (req, res) => {
-    try {
-      const userId = req.user.id;  
-  
-      const profile = await Profile.findOne({ user_id: userId });
-  
-      if (!profile) {
-        return res.status(404).json({ message: "Profile not found." });
-      }
-  
-      res.status(200).json({ profile });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+  try {
+    const userId = req.user.id;
+
+    const profile = await Profile.findOne({ user_id: userId });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found." });
     }
-  };
+
+    const user = await User.findById(userId)
+      .populate({
+        path: 'role',
+        select: 'roleName subCategories',
+        populate: {
+          path: 'subCategories',
+          select: '_id name'
+        }
+      })
+      .select('phone email subCategories');
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+    const subCategoriesDetails = user.role.subCategories.filter(subCategory =>
+      user.subCategories.includes(subCategory._id)
+    );
+
+    res.status(200).json({
+      profile,
+      user: {
+        phone: user.phone,
+        email: user.email,
+        subCategories: subCategoriesDetails, 
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
   
 
   exports.addOrUpdateCompanyProfile = async (req, res) => {

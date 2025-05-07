@@ -122,6 +122,14 @@ const getAllUserDetailsForAdmin = async (req, res) => {
         });
   
         await profile.save();
+
+        const user = await User.findById(userId);
+        if (user) {
+          if (updates.phone) user.phone = updates.phone;
+          if (updates.email) user.email = updates.email;
+          if (updates.subCategories) user.subCategories = updates.subCategories;
+          await user.save();
+        }
         return res.status(200).json({ message: "Profile updated successfully.", profile });
       } else {
         const newProfile = new Profile({
@@ -130,6 +138,14 @@ const getAllUserDetailsForAdmin = async (req, res) => {
         });
   
         await newProfile.save();
+
+        const user = await User.findById(userId);
+        if (user) {
+          if (updates.phone) user.phone = updates.phone;
+          if (updates.email) user.email = updates.email;
+          if (updates.subCategories) user.subCategories = updates.subCategories;
+          await user.save();
+        }
         return res.status(201).json({ message: "Profile created successfully.", profile: newProfile });
       }
     } catch (err) {
