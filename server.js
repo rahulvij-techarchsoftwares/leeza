@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const http = require("http"); 
 const { Server } = require("socket.io");
 const connectDB = require("./db/connectdb");
+const cors = require('cors');
 const roleRoutes = require("./routes/roleRoutes");
 const authRoutes = require("./routes/userRoutes");
 const profileRoutes = require("./routes/profileRoutes");
@@ -28,6 +29,11 @@ const io = new Server(server, {
     credentials: true, 
   },
 });
+
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
 
 
 app.use(express.json());
