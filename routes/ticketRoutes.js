@@ -20,7 +20,8 @@ const {
   addMessageToTicket,
   getTickets,
   getTicketById,
-  updateTicketStatus
+  updateTicketStatus,
+  getAllTickets
 } = require('../controllers/ticketController');
 const { authenticate } = require("../controllers/userController");
 
@@ -29,6 +30,7 @@ router.use(authenticate);
 router.post('/create-ticket', createTicket);
 router.post('/message/:ticketId', addMessageToTicket);
 router.get('/user-ticket-details/:ownerId', getTickets);
+router.get('/all-ticket-details', getAllTickets);
 router.get('/ticket-messages/:ticketId', getTicketById);
 router.put('/ticket-status/:ticketId', updateTicketStatus);
 

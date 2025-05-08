@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const connectDB = require("./db/connectdb");
 const cors = require('cors');
 const roleRoutes = require("./routes/roleRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
 const authRoutes = require("./routes/userRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const jobsRoutes = require("./routes/jobsRoutes");
@@ -60,6 +61,7 @@ io.on("connection", (socket) => {
 });
 
 app.use("/api", roleRoutes);
+app.use("/api", serviceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/jobs", jobsRoutes);

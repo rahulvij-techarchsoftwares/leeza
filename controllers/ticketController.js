@@ -1,6 +1,7 @@
 const Ticket = require('../models/ticketModel');
 const User = require("../models/userModel");
 const Role = require("../models/roleModel");
+const { sendEmail } = require('../service/email');
 
 exports.createTicket = async (req, res) => {
   try {
@@ -9,13 +10,39 @@ exports.createTicket = async (req, res) => {
     const ticket = await Ticket.create({
       user: req.user.id,
       subject,
-      messages: [{
-        sender: req.user.id,
-        senderRole: 'user',
-        message
-      }]
+      messages: []
+      // messages: [{x
+      //   sender: req.user.id,
+      //   senderRole: 'user',
+      //   message
+      // }]
     });
     req.io.emit('new_ticket', ticket); 
+
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    const adminEmail = 'abc@gmail.com';
+
+    await sendEmail({
+      to: adminEmail,
+      subject: "🎫 New Support Ticket Raised",
+      body: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #2196f3;">🚨 New Ticket Notification</h2>
+          <p style="font-size: 16px; color: #333;">
+            A new support ticket has been created by <strong>${user.email}</strong>.
+          </p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <hr style="margin: 20px 0;">
+          <p style="font-size: 14px; color: #888;">
+            Please log in to the admin panel to review and respond to the ticket.
+          </p>
+        </div>
+      `
+    });
     res.status(201).json(ticket);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -143,6 +170,20 @@ exports.updateTicketStatus = async (req, res) => {
     return res.status(200).json({ message: 'Ticket status updated successfully', ticket });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+
+exports.getAllTickets = async (req, res) => {
+  try {
+    const tickets = await Ticket.find()
+      .populate('user', 'name email') 
+      .populate('messages.sender', 'name email') 
+      .sort({ updatedAt: -1 }); 
+
+    res.status(200).json(tickets);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 

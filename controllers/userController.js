@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const Role = require("../models/roleModel");
 const mongoose = require("mongoose");
+const { sendEmail } = require("../service/email");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
@@ -62,6 +63,32 @@ exports.signupUser = async (req, res) => {
       secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: 'Lax', 
       maxAge: 5 * 60 * 60 * 1000 
+    });
+
+    await sendEmail({
+      to: newUser.email,
+      subject: "🎉 Welcome to Our Platform!",
+      body: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4CAF50;">🎉 Welcome to Our Platform!</h2>
+          <p style="font-size: 16px; color: #333;">
+            Hi <strong>${newUser.email}</strong>,
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            You have successfully signed up with us. We're thrilled to have you on board!
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            Your account is now active and ready to use.
+          </p>
+          <hr style="margin: 20px 0;">
+          <p style="font-size: 14px; color: #888;">
+            If you did not sign up for this account, please ignore this email or contact support.
+          </p>
+          <p style="font-size: 16px; color: #4CAF50;">
+            – The Team
+          </p>
+        </div>
+      `
     });
 
     res.status(201).json({
@@ -141,7 +168,31 @@ exports.loginUser = async (req, res) => {
 
       user.password = hashedPassword;
       await user.save();
-  
+      await sendEmail({
+        to: email,
+        subject: "🔒 Your Password Has Been Reset",
+        body: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #f44336;">🔐 Password Reset Confirmation</h2>
+            <p style="font-size: 16px; color: #333;">
+              Hello <strong>${email}</strong>,
+            </p>
+            <p style="font-size: 16px; color: #333;">
+              Your password has been successfully reset.
+            </p>
+            <p style="font-size: 16px; color: #333;">
+              If you did not perform this action, please change your password immediately or contact our support team.
+            </p>
+            <hr style="margin: 20px 0;">
+            <p style="font-size: 14px; color: #888;">
+              Thank you for using our platform.
+            </p>
+            <p style="font-size: 16px; color: #f44336;">
+              – The Team
+            </p>
+          </div>
+        `
+      });
       res.status(200).json({ message: "Password updated successfully." });
     } catch (err) {
       res.status(500).json({ message: err.message });
