@@ -58,6 +58,7 @@ exports.addMessageToTicket = async (req, res) => {
 
     const ticket = await Ticket.findById(ticketId);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    let isAdmin = false;
     if (!ticket.user.equals(user_id)) {
       const user = await User.findById(user_id);
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -67,6 +68,7 @@ exports.addMessageToTicket = async (req, res) => {
       if (!role || !['admin', 'Admin'].includes(role.roleName)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
+      isAdmin = true;
     }
 
     const newMessage = {
@@ -82,6 +84,42 @@ exports.addMessageToTicket = async (req, res) => {
       ticketId,
       ...newMessage
     });
+
+    if (isAdmin) {
+      const ticketOwner = await User.findById(ticket.user);
+      console.log("sending mail to email", ticketOwner.email);
+      if (ticketOwner) {
+        await sendEmail({
+          to: ticketOwner.email,
+          subject: "💬 New Reply to Your Ticket",
+          body: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #4CAF50;">New Message on Your Ticket</h2>
+              <p>Hello,</p>
+              <p>You have received a new message from the support team on your ticket.</p>
+              <p><strong>Message:</strong> ${message}</p>
+              <p style="margin-top: 20px;">Please log in to your account to view and reply.</p>
+              <hr style="margin: 20px 0;">
+              <p style="font-size: 14px; color: #888;">This is an automated message. Do not reply to this email.</p>
+            </div>
+          `
+        });
+      }
+    } else {
+      const supportEmail = "abc@gmail.com"; 
+      await sendEmail({
+        to: supportEmail,
+        subject: "📨 New User Message on Ticket",
+        body: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #2196f3;">User Message Notification</h2>
+            <p>A user has sent a message on their ticket.</p>
+            <p><strong>Message:</strong> ${message}</p>
+            <p>Please check the support panel to respond.</p>
+          </div>
+        `
+      });
+    }
 
     res.status(200).json(ticket);
   } catch (error) {
@@ -167,6 +205,26 @@ exports.updateTicketStatus = async (req, res) => {
 
     ticket.status = status;
     await ticket.save();
+
+
+    const ticketOwner = await User.findById(ticket.user);
+    if (ticketOwner) {
+      await sendEmail({
+        to: ticketOwner.email,
+        subject: "📌 Ticket Status Updated",
+        body: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #f39c12;">Your Ticket Status Changed</h2>
+            <p>Hello,</p>
+            <p>The status of your support ticket has been updated.</p>
+            <p><strong>New Status:</strong> ${status}</p>
+            <p style="margin-top: 20px;">Please log in to your account to view more details.</p>
+            <hr style="margin: 20px 0;">
+            <p style="font-size: 14px; color: #888;">This is an automated message. Do not reply to this email.</p>
+          </div>
+        `
+      });
+    }
 
     return res.status(200).json({ message: 'Ticket status updated successfully', ticket });
   } catch (err) {
