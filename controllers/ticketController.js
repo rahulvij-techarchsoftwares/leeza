@@ -99,7 +99,7 @@ exports.getTickets = async (req, res) => {
     // console.log("this is role", role);
 
     const isAdmin = role && ['admin', 'Admin'].includes(role.roleName);
-    const isOwner = user_id === ownerId;
+    const isOwner = user_id.toString() === ownerId.toString();
     if (!isAdmin && !isOwner) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
