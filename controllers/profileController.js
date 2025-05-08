@@ -65,12 +65,12 @@ exports.getProfile = async (req, res) => {
     );
 
     res.status(200).json({
-      profile,
-      user: {
+      profile: {
+        ...profile.toObject(),
         phone: user.phone,
         email: user.email,
-        subCategories: subCategoriesDetails, 
-      },
+        subCategories: subCategoriesDetails
+      }
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -122,10 +122,26 @@ exports.getProfile = async (req, res) => {
       if (!companyProfile) {
         return res.status(404).json({ message: "Company profile not found." });
       }
+
+      const user = await User.findById(req.user.id)
+      .populate({
+        path: 'role',
+        select: 'roleName subCategories',
+        populate: {
+          path: 'subCategories',
+          select: '_id name'
+        }
+      })
+      .select('phone email subCategories');
   
       res.status(200).json({
         message: "Company profile fetched successfully",
-        profile: companyProfile
+        profile: {
+          ...companyProfile.toObject(),
+          phone: user.phone,
+          email: user.email,
+
+        }
       });
     } catch (err) {
       res.status(500).json({ message: err.message });

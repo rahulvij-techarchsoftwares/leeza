@@ -96,13 +96,14 @@ exports.getTickets = async (req, res) => {
     const user = await User.findById(user_id);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     const role = await Role.findById(user.role);
-    console.log("this is role", role);
-    if (!role || !['admin', 'Admin'].includes(role.roleName)) {
+    // console.log("this is role", role);
+
+    const isAdmin = role && ['admin', 'Admin'].includes(role.roleName);
+    const isOwner = user_id === ownerId;
+    if (!isAdmin && !isOwner) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const tickets = role.roleName === 'admin' || role.roleName === 'Admin'
-    ? await Ticket.find({ user: ownerId }).populate('user', 'name email')
-    : await Ticket.find({ user: user_id }).populate('user', 'name email');
+    const tickets = await Ticket.find({ user: ownerId }).populate('user', 'name email');
 
     if (tickets.length === 0) {
       return res.status(404).json({ error: 'No tickets found for the given ownerId' });

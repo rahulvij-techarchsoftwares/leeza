@@ -34,4 +34,5 @@ router.get('/all-ticket-details', getAllTickets);
 router.get('/ticket-messages/:ticketId', getTicketById);
 router.put('/ticket-status/:ticketId', updateTicketStatus);
 
+
 module.exports = router;
